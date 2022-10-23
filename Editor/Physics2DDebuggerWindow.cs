@@ -1,67 +1,84 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using Sirenix.OdinInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
-    public struct ComponentData
+    public class Physics2DDebuggerWindow
+        #if ODIN_INSPECTOR
+        : OdinEditorWindow
+            #else
+            : EditorWindow
+            #endif
     {
-        public Behaviour Component;
-        public Vector3[] Points;
-    }
-
-    public class Physics2DDebuggerWindow : EditorWindow
-    {
-        private const int _jointCircleSegments = 20;
-
         [SerializeField] private bool draw = true;
         [SerializeField] private bool findComponentsEveryFrame = true;
-
-        [SerializeField] private Color circleColor = Color.gray;
-        [SerializeField] private Color polygonColor = Color.green;
-        [SerializeField] private Color boxColor = Color.white;
-        [SerializeField] private Color edgeColor = Color.white;
-        [SerializeField] private Color jointColor = Color.yellow;
+        [SerializeField] private bool processCustomComponents = true;
+        [SerializeField] private Color staticColliderColor = Color.green;
+        [SerializeField] private Color rigidbodyColor = Color.red;
+        [SerializeField] private ComponentColorData[] customComponentColors;
 
         private Material _lineMaterial;
-        private BoxCollider2D[] _boxColliders2D;
-        private PolygonCollider2D[] _polygonColliders2D;
-        private CircleCollider2D[] _circleColliders2D;
-        private EdgeCollider2D[] _edgeColliders2D;
-        private AnchoredJoint2D[] _anchoredJoints2D;
-        private ComponentData[] _boxPointList;
-        private ComponentData[] _circlePointList;
-        private ComponentData[] _polygonPointList;
-        private ComponentData[] _edgePointList;
-        private ComponentData[] _anchoredJointPointList;
+
+        private BoxCollider2DProcessor _boxCollider2DProcessor = new BoxCollider2DProcessor();
+        private CircleCollider2DProcessor _circleCollider2DProcessor = new CircleCollider2DProcessor();
+        private PolygonCollider2DProcessor _polygonCollider2DProcessor = new PolygonCollider2DProcessor();
+        private EdgeCollider2DProcessor _edgeCollider2DProcessor = new EdgeCollider2DProcessor();
+        private AnchoredJoint2DProcessor _anchoredJoint2DProcessor = new AnchoredJoint2DProcessor();
+        private CapsuleCollider2DProcessor _capsuleCollider2DProcessor = new CapsuleCollider2DProcessor();
+
+        private List<ComponentData> _data = new List<ComponentData>();
         private UnityEditor.Editor _editor;
+
+        private List<Component> _tempComponents = new List<Component>();
+        private HashSet<string> _componentTypes = new HashSet<string>();
+        private Dictionary<string, ComponentColorData> _componentMap = new Dictionary<string, ComponentColorData>();
 
         [MenuItem("Window/Analysis/Physics 2D Debugger")]
         public static void ShowWindow()
         {
             var window = GetWindow<Physics2DDebuggerWindow>();
-            if (!window) CreateInstance<Physics2DDebuggerWindow>();
+            if (!window)
+            {
+                window = CreateInstance<Physics2DDebuggerWindow>();
+            }
+
+            window.Load();
         }
 
         private void OnEnable()
         {
             CreateLineMaterial();
-            CollectComponents();
+            CollectData();
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
             titleContent = new GUIContent("2D Debugger");
         }
 
+#if !ODIN_INSPECTOR
         private void OnGUI()
         {
             if (!_editor)
             {
                 _editor = UnityEditor.Editor.CreateEditor(this);
             }
-
             if (!_editor) return;
             _editor.OnInspectorGUI();
         }
+        #else
+        override protected void OnGUI()
+        {
+            EditorGUI.BeginChangeCheck();
+            base.OnGUI();
+            if (EditorGUI.EndChangeCheck())
+            {
+                Save();
+            }
+        }
+#endif
 
         private void OnDisable()
         {
@@ -86,7 +103,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
 
         private void OnFocus()
         {
-            CollectComponents();
+            CollectData();
         }
 
         private void OnSceneGUI(SceneView sceneView)
@@ -96,258 +113,126 @@ namespace Mitaywalle.Physics2DDebugger.Editor
 
             if (findComponentsEveryFrame)
             {
-                CollectComponents();
+                CollectData();
             }
 
-            CollectData();
             DrawHandles();
-            OnPostRender();
+            //OnPostRender();
+        }
+
+        private void Save()
+        {
+            string json = EditorJsonUtility.ToJson(this, true);
+            File.WriteAllText("UserSettings/Physics2DDebuggerSettings.json", json);
+        }
+
+        private void Load()
+        {
+            string json = File.ReadAllText("UserSettings/Physics2DDebuggerSettings.json");
+            EditorJsonUtility.FromJsonOverwrite(json, this);
         }
 
         private void DrawHandles()
         {
-            Handles.color = boxColor;
-            DrawBox2DGizmo(_boxPointList);
-            Handles.color = circleColor;
-            DrawBox2DGizmo(_circlePointList);
-            Handles.color = polygonColor;
-            DrawBox2DGizmo(_polygonPointList);
-            Handles.color = edgeColor;
-            DrawBox2DGizmo(_edgePointList);
-            Handles.color = jointColor;
-            DrawBox2DGizmo(_anchoredJointPointList);
+            if (_data == null) return;
+            Handles.color = staticColliderColor;
+            Color original = Handles.color;
+
+            for (int i = 0; i < _data.Count; i++)
+            {
+                var data = _data[i];
+                if (data.Points.Length == 0) continue;
+                if (!data.Component.enabled) continue;
+                if (!data.Component.gameObject.activeInHierarchy) continue;
+
+                if (data.Rigidbody2D)
+                {
+                    Handles.color = rigidbodyColor;
+                }
+
+                if (data.OverrideColor.HasValue)
+                {
+                    Handles.color = data.OverrideColor.Value;
+                }
+
+                Handles.DrawLines(data.Points);
+                if (data.OverrideColor.HasValue || data.Rigidbody2D)
+                {
+                    Handles.color = original;
+                }
+            }
         }
 
-        private void CollectComponents()
+        private void ProcessCustomComponents()
         {
-            _boxColliders2D = (BoxCollider2D[]) Resources.FindObjectsOfTypeAll(typeof(BoxCollider2D));
-            _polygonColliders2D = (PolygonCollider2D[]) Resources.FindObjectsOfTypeAll(typeof(PolygonCollider2D));
-            _circleColliders2D = (CircleCollider2D[]) Resources.FindObjectsOfTypeAll(typeof(CircleCollider2D));
-            _anchoredJoints2D = (AnchoredJoint2D[]) Resources.FindObjectsOfTypeAll(typeof(AnchoredJoint2D));
-            _edgeColliders2D = (EdgeCollider2D[]) Resources.FindObjectsOfTypeAll(typeof(EdgeCollider2D));
-            _boxPointList = new ComponentData[_boxColliders2D.Length];
-            _circlePointList = new ComponentData[_circleColliders2D.Length];
-            _polygonPointList = new ComponentData[_polygonColliders2D.Length];
-            _edgePointList = new ComponentData[_edgeColliders2D.Length];
-            _anchoredJointPointList = new ComponentData[_anchoredJoints2D.Length];
+            if (customComponentColors == null) return;
+            if (customComponentColors.Length == 0) return;
+            _componentTypes.Clear();
+            _componentMap.Clear();
+
+            foreach (ComponentColorData componentColorData in customComponentColors)
+            {
+                var type = componentColorData.ComponentType;
+
+                if (type != null)
+                {
+                    _componentTypes.Add(type);
+                    _componentMap.Add(type, componentColorData);
+                }
+                else
+                {
+                    //Debug.LogError($"Component Type '{componentColorData.ComponentType}' not found");
+                }
+            }
+
+            for (int i = 0; i < _data.Count; i++)
+            {
+                var componentData = _data[i];
+                componentData.Component.GetComponentsInParent(false, _tempComponents);
+                for (int j = 0; j < _tempComponents.Count; j++)
+                {
+                    var type = _tempComponents[j].GetType();
+                    if (_componentTypes.Contains(type.Name))
+                    {
+                        componentData.OverrideColor = _componentMap[type.Name].Color;
+                    }
+                }
+
+                _data[i] = componentData;
+            }
         }
 
         private void CollectData()
         {
-            for (int i = 0; i < _boxColliders2D.Length; i++)
-            {
-                BoxCollider2D collider = _boxColliders2D[i];
-                var boundPoints = GetBoxPoints(collider);
-                _boxPointList[i] = boundPoints;
-            }
+            _data.Clear();
+            _data.AddRange(_boxCollider2DProcessor.CreateComponentsData());
+            _data.AddRange(_circleCollider2DProcessor.CreateComponentsData());
+            _data.AddRange(_polygonCollider2DProcessor.CreateComponentsData());
+            _data.AddRange(_edgeCollider2DProcessor.CreateComponentsData());
+            _data.AddRange(_anchoredJoint2DProcessor.CreateComponentsData());
+            _data.AddRange(_capsuleCollider2DProcessor.CreateComponentsData());
 
-            for (int i = 0; i < _circleColliders2D.Length; i++)
-            {
-                CircleCollider2D collider = _circleColliders2D[i];
-                var circlePoints = GetCircleColliderPoints(collider, 40);
-                _circlePointList[i] = circlePoints;
-            }
-
-            for (int i = 0; i < _polygonColliders2D.Length; i++)
-            {
-                PolygonCollider2D collider = _polygonColliders2D[i];
-                var polygonPoints = GetPolygonPoints(collider);
-                _polygonPointList[i] = polygonPoints;
-            }
-
-            for (int i = 0; i < _edgeColliders2D.Length; i++)
-            {
-                EdgeCollider2D collider = _edgeColliders2D[i];
-                var edgePoints = GetEdgePoints(collider);
-                _edgePointList[i] = edgePoints;
-            }
-
-            for (int i = 0; i < _anchoredJoints2D.Length; i++)
-            {
-                AnchoredJoint2D anchoredJoint = _anchoredJoints2D[i];
-                var anchoredJointPoints = GetAnchoredJointPoints(anchoredJoint);
-                _anchoredJointPointList[i] = anchoredJointPoints;
-            }
+            if (processCustomComponents) ProcessCustomComponents();
         }
 
-        private ComponentData GetPolygonPoints(PolygonCollider2D collider)
+        private void RenderGL()
         {
-            Vector3[] points = new Vector3[collider.points.Length * 2];
-
-            Vector3 lastPoint = collider.points[collider.points.Length - 1];
-            lastPoint = collider.transform.TransformPoint(lastPoint.x + collider.offset.x,
-                lastPoint.y + collider.offset.y,
-                0);
-
-            for (int i = 0; i < collider.points.Length; i++)
-            {
-                Vector2 p = collider.points[i];
-                Vector3 point = collider.transform.TransformPoint(p.x + collider.offset.x, p.y + collider.offset.y, 0);
-                points[i * 2] = lastPoint;
-                points[i * 2 + 1] = point;
-                lastPoint = point;
-            }
-
-            //points[points.Length-1] = points[0];
-
-            return new ComponentData { Component = collider, Points = points };
-        }
-
-        private ComponentData GetEdgePoints(EdgeCollider2D collider)
-        {
-            Vector3[] points = new Vector3[collider.points.Length * 2];
-            Vector3 lastPoint = collider.points[0];
-            lastPoint = collider.transform.TransformPoint(lastPoint.x + collider.offset.x,
-                lastPoint.y + collider.offset.y,
-                0);
-
-            for (int i = 0; i < collider.points.Length; i++)
-            {
-                Vector2 p = collider.points[i];
-                Vector3 point = collider.transform.TransformPoint(p.x + collider.offset.x, p.y + collider.offset.y, 0);
-                points[i * 2] = lastPoint;
-                points[i * 2 + 1] = point;
-                lastPoint = point;
-            }
-
-            return new ComponentData { Component = collider, Points = points };
-        }
-
-        private ComponentData GetAnchoredJointPoints(AnchoredJoint2D joint)
-        {
-            if (joint.connectedBody == null)
-            {
-                return new ComponentData { Component = joint, Points = new Vector3[0] };
-            }
-
-            Vector3[] points = new Vector3[2];
-
-            points[0] = joint.gameObject.transform.TransformPoint(joint.anchor.x, joint.anchor.y, 0);
-            points[1] = joint.connectedBody.transform.TransformPoint(joint.connectedAnchor.x,
-                joint.connectedAnchor.y,
-                0);
-
-            if (points[0] == points[1])
-            {
-                points = GetCircle(points[0].x, points[0].y, 0.1f, _jointCircleSegments);
-            }
-
-            return new ComponentData { Component = joint, Points = points };
-        }
-
-        private ComponentData GetBoxPoints(BoxCollider2D collider)
-        {
-            Vector2 scale = collider.size;
-            scale *= 0.5f;
-            Vector3[] points = new Vector3[8];
-
-            points[7] = points[0] = collider.transform.TransformPoint(new Vector3(-scale.x + collider.offset.x,
-                scale.y + collider.offset.y,
-                0));
-
-            points[1] = points[3] = collider.transform.TransformPoint(new Vector3(scale.x + collider.offset.x,
-                scale.y + collider.offset.y,
-                0));
-
-            points[2] = points[4] = collider.transform.TransformPoint(new Vector3(scale.x + collider.offset.x,
-                -scale.y + collider.offset.y,
-                0));
-
-            points[5] = points[6] = collider.transform.TransformPoint(new Vector3(-scale.x + collider.offset.x,
-                -scale.y + collider.offset.y,
-                0));
-
-            return new ComponentData { Component = collider, Points = points };
-        }
-
-        private Vector3[] GetCircle(float x, float y, float radius, int segments)
-        {
-            float segmentSize = 360f / segments;
-            Vector3[] circlePoints = new Vector3[(segments + 1) * 2];
-            Vector3 lastPoint = new Vector3(Mathf.Cos(0) * radius + x, Mathf.Sin(0) * radius + y);
-
-            for (int i = 0; i < segments; i++)
-            {
-                Vector3 p = new Vector3(Mathf.Cos(Mathf.Deg2Rad * (i * segmentSize)) * radius + x,
-                    Mathf.Sin(Mathf.Deg2Rad * (i * segmentSize)) * radius + y);
-
-                circlePoints[i * 2] = p;
-                circlePoints[i * 2 + 1] = lastPoint;
-                lastPoint = p;
-            }
-
-            return circlePoints;
-        }
-
-        private ComponentData GetCircleColliderPoints(CircleCollider2D collider, int segments)
-        {
-            float radius = collider.radius;
-            float angle = collider.transform.rotation.z;
-            float segmentSize = 360f / segments;
-            Vector3[] circlePoints = new Vector3[segments * 2 + 4];
-
-            //drawing the angle line
-            circlePoints[0] = collider.transform.TransformPoint(new Vector3(collider.offset.x, collider.offset.y));
-            circlePoints[1] = collider.transform.TransformPoint(new Vector3(
-                Mathf.Cos(Mathf.Deg2Rad * angle) * radius + collider.offset.x,
-                Mathf.Sin(Mathf.Deg2Rad * angle) * radius + collider.offset.y));
-
-            Vector3 lastPoint = circlePoints[1];
-            for (int i = 1; i < segments + 2; i++)
-            {
-                Vector3 p = collider.transform.TransformPoint(new Vector3(
-                    Mathf.Cos(Mathf.Deg2Rad * (i * segmentSize + angle)) * radius + collider.offset.x,
-                    Mathf.Sin(Mathf.Deg2Rad * (i * segmentSize + angle)) * radius + collider.offset.y));
-
-                circlePoints[i * 2] = p;
-                circlePoints[i * 2 + 1] = lastPoint;
-                lastPoint = p;
-            }
-
-            circlePoints[segments + 2] = circlePoints[1];
-            return new ComponentData { Component = collider, Points = circlePoints };
-        }
-
-        private void DrawBox2DGizmo(ComponentData[] colliderPoints)
-        {
-            if (colliderPoints == null) return;
-            for (int i = 0; i < colliderPoints.Length; i++)
-            {
-                var data = colliderPoints[i];
-                if (data.Points.Length == 0) continue;
-                if (!data.Component.enabled) continue;
-                if (!data.Component.gameObject.activeInHierarchy) continue;
-                Handles.DrawLines(data.Points);
-            }
-        }
-
-        private void OnPostRender()
-        {
-            RenderColliders(_polygonPointList, polygonColor);
-            RenderColliders(_boxPointList, boxColor);
-            RenderColliders(_circlePointList, circleColor);
-            RenderColliders(_edgePointList, edgeColor);
-            RenderColliders(_anchoredJointPointList, jointColor);
-        }
-
-        private void RenderColliders(ComponentData[] colliderPoints, Color color)
-        {
-            if (colliderPoints == null) return;
-            Color originalColor = color;
-            Color halfColor = color / 2;
+            if (_data == null) return;
+            Color originalColor = staticColliderColor;
+            Color halfColor = staticColliderColor / 2;
 
             GL.Begin(GL.LINES);
-            GL.Color(color);
-            for (int i = 0; i < colliderPoints.Length; i++)
+            GL.Color(staticColliderColor);
+            for (int i = 0; i < _data.Count; i++)
             {
-                if (!colliderPoints[i].Component.enabled)
+                if (!_data[i].Component.enabled)
                 {
                     GL.Color(halfColor);
                 }
 
-                if (!colliderPoints[i].Component.gameObject.activeInHierarchy) continue;
+                if (!_data[i].Component.gameObject.activeInHierarchy) continue;
 
-                Vector3[] points = colliderPoints[i].Points;
+                Vector3[] points = _data[i].Points;
 
                 for (int k = 1; k < points.Length; k++)
                 {
@@ -358,7 +243,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
                     GL.Vertex3(p2.x, p2.y, p2.z);
                 }
 
-                if (!colliderPoints[i].Component.enabled)
+                if (!_data[i].Component.enabled)
                 {
                     GL.Color(originalColor);
                 }
