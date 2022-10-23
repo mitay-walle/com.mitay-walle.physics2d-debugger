@@ -4,7 +4,7 @@ Instantly renders Unity's 2D physics colliders and joints as wireframes for rapi
 
 ## Screenshot
 
-![Screenshot](https://raw.githubusercontent.com/AllanBishop/UnityPhysicsDebugDraw2D/master/screenshot.png "Screenshot")
+![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/screenshot.png)
 
 ## Usage
 
