@@ -2,6 +2,9 @@
 
 Instantly renders Unity's 2D physics colliders and joints as wireframes for rapid prototyping.
 
+![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/Screenshot_3.png)
+![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/Screenshot_2.png)
+![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/Screenshot_1.png)
 ![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/screenshot.png)
 
 ## Installation
