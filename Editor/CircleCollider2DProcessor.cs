@@ -46,6 +46,11 @@ namespace Mitaywalle.Physics2DDebugger.Editor
                 lp = drawArguments.Data.Component.transform.TransformPoint(lp);
             }
 
+            Matrix4x4 matrix = drawArguments.Data.Component.transform.localToWorldMatrix;
+            Vector3 scale = drawArguments.Data.Component.transform.lossyScale;
+            float scaleValue = Mathf.Max(scale.x, scale.y, scale.z);
+            scale = Vector3.one*scaleValue;
+            matrix = Matrix4x4.TRS(drawArguments.Data.Component.transform.position,drawArguments.Data.Component.transform.rotation,scale);
             for (float a = -Mathf.PI; a <= Mathf.PI + step; a += step)
             {
                 float x = Mathf.Cos(a);
@@ -53,7 +58,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
                 Vector3 np = new Vector3(x, y) * radius;
 
                 np += offset;
-                np = drawArguments.Data.Component.transform.TransformPoint(np);
+                np = matrix.MultiplyPoint(np);
                 if (lp != Vector3.positiveInfinity) Handles.DrawAAPolyLine(DrawTexture, drawArguments.Thikness, lp, np);
                 lp = np;
             }
