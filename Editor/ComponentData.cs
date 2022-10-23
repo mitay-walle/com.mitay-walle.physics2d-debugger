@@ -1,5 +1,4 @@
 using System;
-using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
@@ -10,6 +9,12 @@ namespace Mitaywalle.Physics2DDebugger.Editor
         public Behaviour Component;
         public Rigidbody2D Rigidbody2D;
         public Vector3[] Points;
-        [ShowInInspector] public Color? OverrideColor;
+        public Color? OverrideColor;
+        public ComponentProcessor processor;
+
+        private void SetProcessor(ComponentProcessor processor) => this.processor = processor;
+
+        public void Draw(float thikness, Color rigidbodyColor, Color original) =>
+            processor.DrawComponent(this, thikness, rigidbodyColor, original);
     }
 }

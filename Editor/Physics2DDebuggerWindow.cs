@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Sirenix.OdinInspector.Editor;
 using UnityEditor;
 using UnityEngine;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector.Editor;
+#endif
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
@@ -14,6 +16,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             : EditorWindow
             #endif
     {
+        [SerializeField, Range(1, 10)] private float thikness = 2;
         [SerializeField] private bool draw = true;
         [SerializeField] private bool findComponentsEveryFrame = true;
         [SerializeField] private bool processCustomComponents = true;
@@ -68,7 +71,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             if (!_editor) return;
             _editor.OnInspectorGUI();
         }
-        #else
+#else
         override protected void OnGUI()
         {
             EditorGUI.BeginChangeCheck();
@@ -140,26 +143,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
 
             for (int i = 0; i < _data.Count; i++)
             {
-                var data = _data[i];
-                if (data.Points.Length == 0) continue;
-                if (!data.Component.enabled) continue;
-                if (!data.Component.gameObject.activeInHierarchy) continue;
-
-                if (data.Rigidbody2D)
-                {
-                    Handles.color = rigidbodyColor;
-                }
-
-                if (data.OverrideColor.HasValue)
-                {
-                    Handles.color = data.OverrideColor.Value;
-                }
-
-                Handles.DrawLines(data.Points);
-                if (data.OverrideColor.HasValue || data.Rigidbody2D)
-                {
-                    Handles.color = original;
-                }
+                _data[i].Draw(thikness, rigidbodyColor, original);
             }
         }
 

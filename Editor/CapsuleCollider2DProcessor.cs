@@ -1,55 +1,76 @@
 using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
     // TODO: capsule collider points realization
-    public class CapsuleCollider2DProcessor : ComponentProcessor<CapsuleCollider2D>
+    public sealed class CapsuleCollider2DProcessor : ComponentProcessor<CapsuleCollider2D>
     {
-        private const int _segments = 40;
-        
+        private const int _segments = 20;
+
         override protected ComponentData CreateComponentData(CapsuleCollider2D component)
         {
-            switch (component.direction)
-            {
-                case CapsuleDirection2D.Vertical:
-                {
-                    break;
-                }
-                case CapsuleDirection2D.Horizontal:
-                {
-                    break;
-                }
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            float radius = component.size.y;
-            float angle = component.transform.rotation.z;
-            float segmentSize = 360f / _segments;
-            Vector3[] points = new Vector3[_segments * 2 + 4];
-
-            //drawing the angle line
-            points[0] = component.transform.TransformPoint(new Vector3(component.offset.x, component.offset.y));
-            points[1] = component.transform.TransformPoint(new Vector3(
-                Mathf.Cos(Mathf.Deg2Rad * angle) * radius + component.offset.x,
-                Mathf.Sin(Mathf.Deg2Rad * angle) * radius + component.offset.y));
-
-            Vector3 lastPoint = points[1];
-            for (int i = 1; i < _segments + 2; i++)
-            {
-                Vector3 p = component.transform.TransformPoint(new Vector3(
-                    Mathf.Cos(Mathf.Deg2Rad * (i * segmentSize + angle)) * radius + component.offset.x,
-                    Mathf.Sin(Mathf.Deg2Rad * (i * segmentSize + angle)) * radius + component.offset.y));
-
-                points[i * 2] = p;
-                points[i * 2 + 1] = lastPoint;
-                lastPoint = p;
-            }
-
-            points[_segments + 2] = points[1];
             return new ComponentData
-                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody };
+                { Component = component, Points = new Vector3[0], Rigidbody2D = component.attachedRigidbody, processor = this };
+        }
+
+        public override void DrawComponent(ComponentData data, float thikness, Color rigidbodyColor, Color original)
+        {
+            //if (data.Points.Length == 0) return;
+            if (!data.Component.enabled) return;
+            if (!data.Component.gameObject.activeInHierarchy) return;
+
+            if (data.Rigidbody2D)
+            {
+                Handles.color = rigidbodyColor;
+            }
+
+            if (data.OverrideColor.HasValue)
+            {
+                Handles.color = data.OverrideColor.Value;
+            }
+
+            CapsuleCollider2D capsule = data.Component as CapsuleCollider2D;
+
+            float step = 0.2f;
+            Vector2 size = capsule.size;
+            Vector3 offset = capsule.offset;
+            float radius = Mathf.Min(size.x, size.y) / 2;
+            float distance = Mathf.Max(size.x, size.y) / 2 - radius;
+            Vector3 lp;
+
+            {
+                float x = Mathf.Cos(-Mathf.PI);
+                float y = Mathf.Sin(-Mathf.PI);
+                lp = new Vector3(x, y) * radius;
+                lp += (capsule.direction == CapsuleDirection2D.Vertical ? Vector3.up : Vector3.zero) * distance * Mathf.Sign(y);
+                lp += (capsule.direction == CapsuleDirection2D.Horizontal ? Vector3.right : Vector3.zero) * distance *
+                      Mathf.Sign(x);
+
+                lp += offset;
+                lp = data.Component.transform.TransformPoint(lp);
+            }
+
+            for (float a = -Mathf.PI; a <= Mathf.PI + step; a += step)
+            {
+                float x = Mathf.Cos(a);
+                float y = Mathf.Sin(a);
+                Vector3 np = new Vector3(x, y) * radius;
+                np += (capsule.direction == CapsuleDirection2D.Vertical ? Vector3.up : Vector3.zero) * distance * Mathf.Sign(y);
+                np += (capsule.direction == CapsuleDirection2D.Horizontal ? Vector3.right : Vector3.zero) * distance *
+                      Mathf.Sign(x);
+
+                np += offset;
+                np = data.Component.transform.TransformPoint(np);
+                if (lp != Vector3.positiveInfinity) Handles.DrawAAPolyLine(thikness, lp, np);
+                lp = np;
+            }
+
+            if (data.OverrideColor.HasValue || data.Rigidbody2D)
+            {
+                Handles.color = original;
+            }
         }
     }
 }

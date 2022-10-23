@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
-    public class CircleCollider2DProcessor : ComponentProcessor<CircleCollider2D>
+    public sealed class CircleCollider2DProcessor : ComponentProcessor<CircleCollider2D>
     {
         private const int _segments = 40;
 
@@ -33,7 +33,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
 
             points[_segments + 2] = points[1];
             return new ComponentData
-                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody };
+                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody, processor = this };
         }
     }
 }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
-    public class EdgeCollider2DProcessor : ComponentProcessor<EdgeCollider2D>
+    public sealed class EdgeCollider2DProcessor : ComponentProcessor<EdgeCollider2D>
     {
         override protected ComponentData CreateComponentData(EdgeCollider2D component)
         {
@@ -24,7 +24,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             }
 
             return new ComponentData
-                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody };
+                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody, processor = this };
         }
     }
 }

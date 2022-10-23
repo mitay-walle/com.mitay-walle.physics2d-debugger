@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
-    public class AnchoredJoint2DProcessor : ComponentProcessor<AnchoredJoint2D>
+    public sealed class AnchoredJoint2DProcessor : ComponentProcessor<AnchoredJoint2D>
     {
         private const int _jointCircleSegments = 20;
 
@@ -26,7 +26,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             }
 
             return new ComponentData
-                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody };
+                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody, processor = this };
         }
 
         private Vector3[] GetCircle(float x, float y, float radius, int segments)
