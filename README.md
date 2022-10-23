@@ -4,6 +4,9 @@ Instantly renders Unity's 2D physics colliders and joints as wireframes for rapi
 
 ![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/screenshot.png)
 
+## Installation
+Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.html)
+
 ## Usage
 
 - open window by click 'Window/Analysis/Physics 2D Debugger'
