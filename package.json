@@ -1,7 +1,7 @@
 {
   "name": "com.mitay-walle.physics2d-debugger",
   "version": "1.0.0",
-  "displayName": "Physics2D Debugger",
+  "displayName": "Physics 2D Debugger",
   "description": "Instantly renders Unity's 2D physics colliders and joints as a wireframe for rapid prototyping",
   "unity": "2018.4",
   "documentationUrl": "https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/README.md",
