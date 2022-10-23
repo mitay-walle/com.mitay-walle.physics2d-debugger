@@ -18,6 +18,8 @@ Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.h
 - hide by Draw-flag
 - hide by Collider.gameObject.activeInHierarcy 
 - Collider.enabled = false make Gizmo.Color half-visible
+- Settings saved in Project/UserSettings
+- MonoBehaviour can override color By its name
 # Changed
 - converted to UPM-package
 - MonoBehaviour converted to EditorWindow
@@ -25,3 +27,4 @@ Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.h
 # Known Issues
 - [ ] [#1 non-uniform scaled CircleCollider2D is drawing wrong](/../../issues/1) 
 - [ ] [#2 GameView draw removed](/../../issues/2) 
+- [ ] [#3 no CapsuleCollider2 support ](/../../issues/3) 
