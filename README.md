@@ -2,8 +2,8 @@
 
 Instantly renders Unity's 2D physics colliders and joints as wireframes for rapid prototyping.
 
-![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/screenshot.png)
 ![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/Screenshot_2.png)
+![](https://github.com/mitay-walle/com.mitay-walle.physics2d-debugger/blob/master/Documentation~/screenshot.png)
 
 ## Installation
 Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.html)
