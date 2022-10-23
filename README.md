@@ -8,6 +8,6 @@ Instantly renders Unity's 2D physics colliders and joints as wireframes for rapi
 
 ## Usage
 
-- Attach the DebugDrawPhysics2D.cs component script to a camera in the scene.
-- To view the wireframe in the editor ensure Gizmos is turn on.
-- The colours for the various types of colliders can be changed on the DebugDrawPhysics2D component.
+- open window by click 'Window/Analysis/Physics 2D Debugger'
+- ensure Gizmos is turn on
+- The colours for the various types of colliders can be changed in the '2D Debugger' window
