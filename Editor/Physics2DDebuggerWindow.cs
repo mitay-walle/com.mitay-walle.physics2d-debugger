@@ -9,7 +9,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
         public Behaviour Component;
         public Vector3[] Points;
     }
-    
+
     public class Physics2DDebuggerWindow : EditorWindow
     {
         private const int _jointCircleSegments = 20;
@@ -73,6 +73,17 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             SceneView.duringSceneGui -= OnSceneGUI;
         }
 
+        private void OnBecameVisible()
+        {
+            SceneView.duringSceneGui -= OnSceneGUI;
+            SceneView.duringSceneGui += OnSceneGUI;
+        }
+
+        private void OnBecameInvisible()
+        {
+            SceneView.duringSceneGui -= OnSceneGUI;
+        }
+
         private void OnFocus()
         {
             CollectComponents();
@@ -80,6 +91,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
 
         private void OnSceneGUI(SceneView sceneView)
         {
+            if (!sceneView.drawGizmos) return;
             if (!draw) return;
 
             if (findComponentsEveryFrame)
@@ -162,7 +174,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
         {
             Vector3[] points = new Vector3[collider.points.Length * 2];
 
-            Vector3 lastPoint = collider.points[collider.points.Length-1];
+            Vector3 lastPoint = collider.points[collider.points.Length - 1];
             lastPoint = collider.transform.TransformPoint(lastPoint.x + collider.offset.x,
                 lastPoint.y + collider.offset.y,
                 0);
@@ -322,8 +334,8 @@ namespace Mitaywalle.Physics2DDebugger.Editor
         {
             if (colliderPoints == null) return;
             Color originalColor = color;
-            Color halfColor = color/2;
-            
+            Color halfColor = color / 2;
+
             GL.Begin(GL.LINES);
             GL.Color(color);
             for (int i = 0; i < colliderPoints.Length; i++)
@@ -332,8 +344,9 @@ namespace Mitaywalle.Physics2DDebugger.Editor
                 {
                     GL.Color(halfColor);
                 }
+
                 if (!colliderPoints[i].Component.gameObject.activeInHierarchy) continue;
-                
+
                 Vector3[] points = colliderPoints[i].Points;
 
                 for (int k = 1; k < points.Length; k++)
@@ -344,7 +357,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
                     Vector3 p2 = points[k];
                     GL.Vertex3(p2.x, p2.y, p2.z);
                 }
-                
+
                 if (!colliderPoints[i].Component.enabled)
                 {
                     GL.Color(originalColor);
