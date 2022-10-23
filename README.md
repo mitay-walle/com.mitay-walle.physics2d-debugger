@@ -10,11 +10,13 @@ Instantly renders Unity's 2D physics colliders and joints as wireframes for rapi
 Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
 ## Usage
-
 - open window by click 'Window/Analysis/Physics 2D Debugger'
 - ensure Gizmos is turn on
 - The colors for the various types of colliders can be changed in the '2D Debugger' window
 # Added
+- [X] [#3 CapsuleCollider support](/../../issues/3) 
+- line hard/soft
+- line thickness
 - hide by SceneView.DrawGizmos
 - hide by EditorWindow.OnBecameVisible
 - hide by Draw-flag
