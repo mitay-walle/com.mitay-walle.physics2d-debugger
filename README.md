@@ -6,10 +6,6 @@ Instantly renders Unity's 2D physics colliders and joints as wireframes for rapi
 
 ![Screenshot](https://raw.githubusercontent.com/AllanBishop/UnityPhysicsDebugDraw2D/master/screenshot.png "Screenshot")
 
-## Requirements
-
- - Unity Pro
-
 ## Usage
 
 - Attach the DebugDrawPhysics2D.cs component script to a camera in the scene.
