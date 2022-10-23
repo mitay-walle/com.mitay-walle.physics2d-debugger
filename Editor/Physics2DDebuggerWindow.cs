@@ -18,20 +18,27 @@ namespace Mitaywalle.Physics2DDebugger.Editor
     {
         [SerializeField, Range(1, 10)] private float thikness = 2;
         [SerializeField] private bool draw = true;
+        [SerializeField] private bool soft;
         [SerializeField] private bool findComponentsEveryFrame = true;
         [SerializeField] private bool processCustomComponents = true;
         [SerializeField] private Color staticColliderColor = Color.green;
         [SerializeField] private Color rigidbodyColor = Color.red;
+        [SerializeField] private Color jointColor = Color.yellow;
         [SerializeField] private ComponentColorData[] customComponentColors;
 
         private Material _lineMaterial;
+        private Texture2D _textureSoft;
+        private Texture2D _textureHard;
 
-        private BoxCollider2DProcessor _boxCollider2DProcessor = new BoxCollider2DProcessor();
-        private CircleCollider2DProcessor _circleCollider2DProcessor = new CircleCollider2DProcessor();
-        private PolygonCollider2DProcessor _polygonCollider2DProcessor = new PolygonCollider2DProcessor();
-        private EdgeCollider2DProcessor _edgeCollider2DProcessor = new EdgeCollider2DProcessor();
-        private AnchoredJoint2DProcessor _anchoredJoint2DProcessor = new AnchoredJoint2DProcessor();
-        private CapsuleCollider2DProcessor _capsuleCollider2DProcessor = new CapsuleCollider2DProcessor();
+        private ComponentProcessor[] _processors =
+        {
+            new BoxCollider2DProcessor(),
+            new CircleCollider2DProcessor(),
+            new PolygonCollider2DProcessor(),
+            new EdgeCollider2DProcessor(),
+            new AnchoredJoint2DProcessor(),
+            new CapsuleCollider2DProcessor(),
+        };
 
         private List<ComponentData> _data = new List<ComponentData>();
         private UnityEditor.Editor _editor;
@@ -59,6 +66,11 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
             titleContent = new GUIContent("2D Debugger");
+            _textureHard = Texture2D.whiteTexture;
+            if (_textureSoft)
+            {
+                _textureSoft = null;
+            }
         }
 
 #if !ODIN_INSPECTOR
@@ -140,10 +152,17 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             if (_data == null) return;
             Handles.color = staticColliderColor;
             Color original = Handles.color;
+            for (int i = 0; i < _processors.Length; i++)
+            {
+                _processors[i].DrawTexture = soft ? _textureSoft : _textureHard;
+            }
+
+            var arguments = new DrawArguments
+                { Thikness = thikness, RigidbodyColor = rigidbodyColor, StaticColor = original,JointColor = jointColor};
 
             for (int i = 0; i < _data.Count; i++)
             {
-                _data[i].Draw(thikness, rigidbodyColor, original);
+                _data[i].Draw(arguments);
             }
         }
 
@@ -189,12 +208,11 @@ namespace Mitaywalle.Physics2DDebugger.Editor
         private void CollectData()
         {
             _data.Clear();
-            _data.AddRange(_boxCollider2DProcessor.CreateComponentsData());
-            _data.AddRange(_circleCollider2DProcessor.CreateComponentsData());
-            _data.AddRange(_polygonCollider2DProcessor.CreateComponentsData());
-            _data.AddRange(_edgeCollider2DProcessor.CreateComponentsData());
-            _data.AddRange(_anchoredJoint2DProcessor.CreateComponentsData());
-            _data.AddRange(_capsuleCollider2DProcessor.CreateComponentsData());
+
+            foreach (ComponentProcessor processor in _processors)
+            {
+                _data.AddRange(processor.CreateComponentsData());
+            }
 
             if (processCustomComponents) ProcessCustomComponents();
         }

@@ -1,39 +1,67 @@
+using UnityEditor;
 using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
     public sealed class CircleCollider2DProcessor : ComponentProcessor<CircleCollider2D>
     {
-        private const int _segments = 40;
-
         override protected ComponentData CreateComponentData(CircleCollider2D component)
         {
-            float radius = component.radius;
-            float angle = component.transform.rotation.z;
-            float segmentSize = 360f / _segments;
-            Vector3[] points = new Vector3[_segments * 2 + 4];
-
-            //drawing the angle line
-            points[0] = component.transform.TransformPoint(new Vector3(component.offset.x, component.offset.y));
-            points[1] = component.transform.TransformPoint(new Vector3(
-                Mathf.Cos(Mathf.Deg2Rad * angle) * radius + component.offset.x,
-                Mathf.Sin(Mathf.Deg2Rad * angle) * radius + component.offset.y));
-
-            Vector3 lastPoint = points[1];
-            for (int i = 1; i < _segments + 2; i++)
+            return new ComponentData
             {
-                Vector3 p = component.transform.TransformPoint(new Vector3(
-                    Mathf.Cos(Mathf.Deg2Rad * (i * segmentSize + angle)) * radius + component.offset.x,
-                    Mathf.Sin(Mathf.Deg2Rad * (i * segmentSize + angle)) * radius + component.offset.y));
+                Component = component, Points = new Vector3[0], Rigidbody2D = component.attachedRigidbody,
+                processor = this
+            };
+        }
 
-                points[i * 2] = p;
-                points[i * 2 + 1] = lastPoint;
-                lastPoint = p;
+        public override void DrawComponent(DrawArguments drawArguments)
+        {
+            //if (data.Points.Length == 0) return;
+            if (!drawArguments.Data.Component.enabled) return;
+            if (!drawArguments.Data.Component.gameObject.activeInHierarchy) return;
+
+            if (drawArguments.Data.Rigidbody2D)
+            {
+                Handles.color = drawArguments.RigidbodyColor;
             }
 
-            points[_segments + 2] = points[1];
-            return new ComponentData
-                { Component = component, Points = points, Rigidbody2D = component.attachedRigidbody, processor = this };
+            if (drawArguments.Data.OverrideColor.HasValue)
+            {
+                Handles.color = drawArguments.Data.OverrideColor.Value;
+            }
+
+            var circle = drawArguments.Data.Component as CircleCollider2D;
+
+            float step = 0.2f;
+            Vector3 offset = circle.offset;
+            float radius = circle.radius;
+            Vector3 lp;
+
+            {
+                float x = Mathf.Cos(-Mathf.PI);
+                float y = Mathf.Sin(-Mathf.PI);
+                lp = new Vector3(x, y) * radius;
+
+                lp += offset;
+                lp = drawArguments.Data.Component.transform.TransformPoint(lp);
+            }
+
+            for (float a = -Mathf.PI; a <= Mathf.PI + step; a += step)
+            {
+                float x = Mathf.Cos(a);
+                float y = Mathf.Sin(a);
+                Vector3 np = new Vector3(x, y) * radius;
+
+                np += offset;
+                np = drawArguments.Data.Component.transform.TransformPoint(np);
+                if (lp != Vector3.positiveInfinity) Handles.DrawAAPolyLine(DrawTexture, drawArguments.Thikness, lp, np);
+                lp = np;
+            }
+
+            if (drawArguments.Data.OverrideColor.HasValue || drawArguments.Data.Rigidbody2D)
+            {
+                Handles.color = drawArguments.StaticColor;
+            }
         }
     }
 }

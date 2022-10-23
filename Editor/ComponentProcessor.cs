@@ -3,30 +3,42 @@ using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
+    public struct DrawArguments
+    {
+        public ComponentData Data;
+        public float Thikness;
+        public Color RigidbodyColor;
+        public Color StaticColor;
+        public Color JointColor;
+    }
+
     public abstract class ComponentProcessor
     {
+        public Texture2D DrawTexture;
+
         public abstract ComponentData[] CreateComponentsData();
 
-        public virtual void DrawComponent(ComponentData data,float thikness, Color rigidbodyColor, Color original)
+        public virtual void DrawComponent(DrawArguments drawArguments)
         {
-            if (data.Points.Length == 0) return;
-            if (!data.Component.enabled) return;
-            if (!data.Component.gameObject.activeInHierarchy) return;
+            if (drawArguments.Data.Points.Length == 0) return;
+            if (!drawArguments.Data.Component.gameObject.activeInHierarchy) return;
 
-            if (data.Rigidbody2D)
+            if (drawArguments.Data.Rigidbody2D)
             {
-                Handles.color = rigidbodyColor;
+                Handles.color = drawArguments.RigidbodyColor;
             }
 
-            if (data.OverrideColor.HasValue)
+            if (drawArguments.Data.OverrideColor.HasValue)
             {
-                Handles.color = data.OverrideColor.Value;
+                Handles.color = drawArguments.Data.OverrideColor.Value;
             }
 
-            Handles.DrawAAPolyLine(thikness, data.Points);
-            if (data.OverrideColor.HasValue || data.Rigidbody2D)
+            if (!drawArguments.Data.Component.enabled) Handles.color /= 2;
+
+            Handles.DrawAAPolyLine(DrawTexture, drawArguments.Thikness, drawArguments.Data.Points);
+            if (drawArguments.Data.OverrideColor.HasValue || drawArguments.Data.Rigidbody2D)
             {
-                Handles.color = original;
+                Handles.color = drawArguments.StaticColor;
             }
         }
     }

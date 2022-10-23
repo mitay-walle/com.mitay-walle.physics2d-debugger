@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
@@ -10,7 +11,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
         {
             if (component.connectedBody == null)
             {
-                return new ComponentData { Component = component, Points = new Vector3[0] };
+                return new ComponentData { Component = component, Points = new Vector3[0], processor = this };
             }
 
             Vector3[] points = new Vector3[2];
@@ -46,6 +47,17 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             }
 
             return circlePoints;
+        }
+
+        public override void DrawComponent(DrawArguments drawArguments)
+        {
+            if (drawArguments.Data.Points.Length == 0) return;
+            if (!drawArguments.Data.Component.enabled) return;
+            if (!drawArguments.Data.Component.gameObject.activeInHierarchy) return;
+
+            Handles.color = drawArguments.JointColor;
+            Handles.DrawAAPolyLine(DrawTexture, drawArguments.Thikness, drawArguments.Data.Points);
+            Handles.color = drawArguments.StaticColor;
         }
     }
 }
