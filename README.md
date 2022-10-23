@@ -11,4 +11,4 @@ Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.h
 
 - open window by click 'Window/Analysis/Physics 2D Debugger'
 - ensure Gizmos is turn on
-- The colours for the various types of colliders can be changed in the '2D Debugger' window
+- The colors for the various types of colliders can be changed in the '2D Debugger' window
