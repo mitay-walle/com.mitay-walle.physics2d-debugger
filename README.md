@@ -17,6 +17,7 @@ Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.h
 - hide by EditorWindow.OnBecameVisible
 - hide by Draw-flag
 - hide by Collider.gameObject.activeInHierarcy 
+- Color by has/no Rigidbody2D
 - Collider.enabled = false make Gizmo.Color half-visible
 - Settings saved in Project/UserSettings
 - MonoBehaviour can override color By its name
