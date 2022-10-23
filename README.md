@@ -26,6 +26,7 @@ Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.h
 - converted to UPM-package
 - MonoBehaviour converted to EditorWindow
 - Gizmos.DrawLine() replaced with Handles.DrawLines()
+# Fixed
+- [X] [#1 non-uniform scaled CircleCollider2D is drawing wrong](/../../issues/1) 
 # Known Issues
-- [ ] [#1 non-uniform scaled CircleCollider2D is drawing wrong](/../../issues/1) 
 - [ ] [#2 GameView draw removed](/../../issues/2) 
