@@ -14,7 +14,7 @@ Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.h
 - ensure Gizmos is turn on
 - The colors for the various types of colliders can be changed in the '2D Debugger' window
 # Added
-- [X] [#3 CapsuleCollider support](/../../issues/3) 
+- - [X] [#3 CapsuleCollider support](/../../issues/3) 
 - line hard/soft
 - line thickness
 - hide by SceneView.DrawGizmos
