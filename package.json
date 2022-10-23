@@ -1,6 +1,6 @@
 {
   "name": "com.mitay-walle.physics2d-debugger",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "displayName": "2D Physics Debugger",
   "description": "Instantly renders Unity's 2D physics colliders and joints as a wireframe for rapid prototyping",
   "unity": "2018.4",
