@@ -12,3 +12,16 @@ Install UPM-Package [by Git URL](https://docs.unity3d.com/Manual/upm-ui-giturl.h
 - open window by click 'Window/Analysis/Physics 2D Debugger'
 - ensure Gizmos is turn on
 - The colors for the various types of colliders can be changed in the '2D Debugger' window
+# Added
+- hide by SceneView.DrawGizmos
+- hide by EditorWindow.OnBecameVisible
+- hide by Draw-flag
+- hide by Collider.gameObject.activeInHierarcy 
+- Collider.enabled = false make Gizmo.Color half-visible
+# Changed
+- converted to UPM-package
+- MonoBehaviour converted to EditorWindow
+- Gizmos.DrawLine() replaced with Handles.DrawLines()
+# Known Issues
+- non-uniform scaled CircleCollider2D is drawing wrong
+- GameView draw removed
