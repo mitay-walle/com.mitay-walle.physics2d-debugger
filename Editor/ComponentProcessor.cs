@@ -3,15 +3,6 @@ using UnityEngine;
 
 namespace Mitaywalle.Physics2DDebugger.Editor
 {
-    public struct DrawArguments
-    {
-        public ComponentData Data;
-        public float Thikness;
-        public Color RigidbodyColor;
-        public Color StaticColor;
-        public Color JointColor;
-    }
-
     public abstract class ComponentProcessor
     {
         public Texture2D DrawTexture;
@@ -33,7 +24,10 @@ namespace Mitaywalle.Physics2DDebugger.Editor
                 Handles.color = drawArguments.Data.OverrideColor.Value;
             }
 
-            if (!drawArguments.Data.Component.enabled) Handles.color /= 2;
+            if (!drawArguments.Data.Component.enabled) 
+            {
+                Handles.color *=drawArguments.DisabledAlpha;
+            }
 
             Handles.DrawAAPolyLine(DrawTexture, drawArguments.Thikness, drawArguments.Data.Points);
             if (drawArguments.Data.OverrideColor.HasValue || drawArguments.Data.Rigidbody2D)

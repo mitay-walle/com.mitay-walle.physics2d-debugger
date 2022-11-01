@@ -17,6 +17,7 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             #endif
     {
         [SerializeField, Range(1, 10)] private float thikness = 2;
+        [SerializeField, Range(0, 1)] private float disabledAlpha = .5f;
         [SerializeField] private bool draw = true;
         [SerializeField] private bool soft;
         [SerializeField] private bool findComponentsEveryFrame = true;
@@ -158,7 +159,13 @@ namespace Mitaywalle.Physics2DDebugger.Editor
             }
 
             var arguments = new DrawArguments
-                { Thikness = thikness, RigidbodyColor = rigidbodyColor, StaticColor = original,JointColor = jointColor};
+            {
+                Thikness = thikness,
+                RigidbodyColor = rigidbodyColor,
+                StaticColor = original,
+                JointColor = jointColor,
+                DisabledAlpha = disabledAlpha,
+            };
 
             for (int i = 0; i < _data.Count; i++)
             {

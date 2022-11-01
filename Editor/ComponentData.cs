@@ -14,7 +14,17 @@ namespace Mitaywalle.Physics2DDebugger.Editor
 
         private void SetProcessor(ComponentProcessor processor) => this.processor = processor;
 
-        public void Draw(DrawArguments arguments) =>
-            processor.DrawComponent(new DrawArguments{Data = this,JointColor = arguments.JointColor,RigidbodyColor = arguments.RigidbodyColor,StaticColor = arguments.StaticColor,Thikness = arguments.Thikness});
+        public void Draw(DrawArguments arguments)
+        {
+            processor.DrawComponent(new DrawArguments
+            {
+                Data = this,
+                JointColor = arguments.JointColor,
+                RigidbodyColor = arguments.RigidbodyColor,
+                StaticColor = arguments.StaticColor,
+                Thikness = arguments.Thikness,
+                DisabledAlpha = arguments.DisabledAlpha,
+            });
+        }
     }
 }
