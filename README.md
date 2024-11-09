@@ -1,3 +1,5 @@
+Use [SceneViewColliders2DOverlay](https://github.com/mitay-walle/SceneViewColliders2DOverlay) instead
+
 # Unity Physics 2D Debugger
 
 Instantly renders Unity's 2D physics colliders and joints as wireframes for rapid prototyping.
